@@ -16,6 +16,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/beego/beego/utils/pagination"
 	"github.com/casibase/casibase/object"
@@ -48,7 +49,11 @@ func (c *ApiController) GetRecords() {
 
 		c.ResponseOk(records)
 	} else {
-		limit := util.ParseInt(limit)
+		limit, err := util.ParseIntWithError(limit)
+		if err != nil {
+			c.ResponseError(err.Error())
+			return
+		}
 
 		count, err := object.GetRecordCount(owner, field, value)
 		if err != nil {
@@ -130,7 +135,52 @@ func (c *ApiController) AddRecord() {
 		record.UserAgent = c.getUserAgent()
 	}
 
-	c.Data["json"] = wrapActionResponse(object.AddRecord(&record))
+	c.Data["json"] = wrapActionResponse2(object.AddRecord(&record))
+	c.ServeJSON()
+}
+
+// AddRecords
+// @Title AddRecords
+// @Tag Record API
+// @Description add multiple records
+// @Param   body    body   []object.Record  true        "The details of the records"
+// @Param   sync    query  string           false       "Set to 'true' or '1' to enable synchronous processing"
+// @Success 200 {object} controllers.Response The Response object
+// @router /add-records [post]
+func (c *ApiController) AddRecords() {
+	// Determine synchronous processing
+	var syncEnabled bool
+	syncParam := strings.ToLower(c.Input().Get("sync"))
+	if syncParam == "true" || syncParam == "1" {
+		syncEnabled = true
+	} else {
+		syncEnabled = false
+	}
+	var records []*object.Record
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &records)
+	if err != nil {
+		c.ResponseError(err.Error())
+		return
+	}
+
+	if len(records) == 0 {
+		c.ResponseError("No records to add")
+		return
+	}
+
+	clientIp := c.getClientIp()
+	userAgent := c.getUserAgent()
+
+	for i := range records {
+		if records[i].ClientIp == "" {
+			records[i].ClientIp = clientIp
+		}
+		if records[i].UserAgent == "" {
+			records[i].UserAgent = userAgent
+		}
+	}
+
+	c.Data["json"] = wrapActionResponse2(object.AddRecords(records, syncEnabled))
 	c.ServeJSON()
 }
 

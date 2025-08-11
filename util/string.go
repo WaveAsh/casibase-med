@@ -82,6 +82,15 @@ func GetOwnerAndNameFromId(id string) (string, string) {
 	return tokens[0], tokens[1]
 }
 
+func GetOwnerAndNameFromIdWithError(id string) (string, string, error) {
+	tokens := strings.Split(id, "/")
+	if len(tokens) != 2 {
+		return "", "", errors.New("id should be in the format of owner/name")
+	}
+
+	return tokens[0], tokens[1], nil
+}
+
 func GetOwnerAndNameFromId3(id string) (string, string, string) {
 	tokens := strings.Split(id, "/")
 	if len(tokens) != 3 {
@@ -124,20 +133,22 @@ func WriteStringToPath(s string, path string) {
 	}
 }
 
-func ReadBytesFromPath(path string) []byte {
+func ReadBytesFromPath(path string) ([]byte, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return data
+	return data, nil
 }
 
-func WriteBytesToPath(b []byte, path string) {
+func WriteBytesToPath(b []byte, path string) error {
 	err := ioutil.WriteFile(path, b, 0o644)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func DecodeBase64(s string) string {
