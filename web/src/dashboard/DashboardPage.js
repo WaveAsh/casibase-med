@@ -218,7 +218,7 @@ class DashboardPage extends Component {
   render() {
     return (
       <div className="dashboard-page">
-        <h1>数据看板</h1>
+        <h1>可信共享数据总览</h1>
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Card title="就诊记录统计总览" bordered={true} style={{ 
