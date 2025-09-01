@@ -40,10 +40,6 @@ class UsagePage extends BaseListPage {
     };
   }
 
-  UNSAFE_componentWillMount() {
-    this.getUsers("");
-  }
-
   getHost() {
     let res = window.location.host;
     if (res === "localhost:13001") {
@@ -53,8 +49,10 @@ class UsagePage extends BaseListPage {
   }
 
   getUsages(serverUrl) {
-    UsageBackend.getUsages(serverUrl, this.state.selectedUser, 30)
+    const selectedStore = Setting.getRequestStore(this.props.account);
+    UsageBackend.getUsages(serverUrl, selectedStore, this.state.selectedUser, 30)
       .then((res) => {
+        if (selectedStore !== Setting.getRequestStore(this.props.account)) {return;}
         if (res.status === "ok") {
           this.setState({
             usages: res.data,
@@ -89,34 +87,38 @@ class UsagePage extends BaseListPage {
 
   updateTableInfo(user) {
     if (user === "All") {
-      this.state.selectedTableInfo = this.state.userTableInfo;
+      this.setState({selectedTableInfo: this.state.userTableInfo});
     } else {
-      this.state.selectedTableInfo = this.state.userTableInfo.filter(item => item.user === this.state.users[user]);
+      const filtered = (this.state.userTableInfo || []).filter(item => item.user === this.state.users[user]);
+      this.setState({selectedTableInfo: filtered});
     }
   }
 
   getUsers(serverUrl) {
-    UsageBackend.getUsers(serverUrl, this.props.account.name)
+    UsageBackend.getUsers(serverUrl, this.props.account.name, Setting.getRequestStore(this.props.account))
       .then((res) => {
         if (res.status === "ok") {
+          const selectedUser = !(this.props.account.name === "admin" || this.props.account.type === "chat-admin") ? res.data[0] : "All";
           this.setState({
             users: res.data,
+            selectedUser: selectedUser,
           }, () => {
             this.getUsages("");
             this.getRangeUsagesAll("");
             this.getUserTableInfos("");
           }
           );
-          this.state.selectedUser = !(this.props.account.name === "admin" || this.props.account.type === "chat-admin") ? res.data[0] : "All";
         } else {
           Setting.showMessage("error", `${i18next.t("general:Failed to get")}: ${res.msg}`);
         }
       });
   }
   getRangeUsages(serverUrl, rangeType) {
+    const selectedStore = Setting.getRequestStore(this.props.account);
     const count = this.getCountFromRangeType(rangeType);
-    UsageBackend.getRangeUsages(serverUrl, rangeType, count, this.state.selectedUser)
+    UsageBackend.getRangeUsages(serverUrl, rangeType, count, selectedStore, this.state.selectedUser)
       .then((res) => {
+        if (selectedStore !== Setting.getRequestStore(this.props.account)) {return;}
         if (res.status === "ok") {
           const state = {};
           state[`rangeUsages${rangeType}`] = res.data;
@@ -127,11 +129,15 @@ class UsagePage extends BaseListPage {
       });
   }
   getUserTableInfos(serverUrl) {
-    UsageBackend.getUserTableInfos(serverUrl, this.props.account.name)
+    const selectedStore = Setting.getRequestStore(this.props.account);
+    UsageBackend.getUserTableInfos(serverUrl, selectedStore, this.props.account.name)
       .then((res) => {
+        if (selectedStore !== Setting.getRequestStore(this.props.account)) {return;}
         if (res.status === "ok") {
           this.setState({
             userTableInfo: res.data,
+          }, () => {
+            this.updateTableInfo("All");
           });
         } else {
           Setting.showMessage("error", `${i18next.t("general:Failed to get")}: ${res.msg}`);
@@ -381,8 +387,14 @@ class UsagePage extends BaseListPage {
     if (rangeType === "") {
       rangeType = this.state.rangeType;
     }
-    this.getRangeUsagesAll(serverUrl);
-    this.getUsages(serverUrl);
+    const stateReset = {usages: null};
+    if (rangeType !== "All") {
+      stateReset[`rangeUsages${rangeType}`] = null;
+    }
+    this.setState(stateReset, () => {
+      this.getRangeUsagesAll(serverUrl);
+      this.getUsages(serverUrl);
+    });
     // if (rangeType === "All") {
     //   this.getUsages(serverUrl);
     // } else {
@@ -764,6 +776,14 @@ class UsagePage extends BaseListPage {
       </div>
     );
   }
+
+  fetch = () => {
+    const reset = {usages: null, userTableInfo: null, selectedTableInfo: null};
+    if (this.state.rangeType !== "All") {
+      reset[`rangeUsages${this.state.rangeType}`] = null;
+    }
+    this.setState(reset, () => this.getUsers(""));
+  };
 }
 
 export default UsagePage;

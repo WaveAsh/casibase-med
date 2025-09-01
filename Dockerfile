@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM node:18.19.0 AS FRONT
+FROM --platform=$BUILDPLATFORM node:20.18.0 AS FRONT
 WORKDIR /web
 COPY ./web .
 RUN yarn install --frozen-lockfile --network-timeout 1000000 && yarn run build
@@ -27,7 +27,9 @@ RUN adduser -D $USER -u 1000 \
     && echo "$USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER \
     && chmod 0440 /etc/sudoers.d/$USER \
     && mkdir logs \
-    && chown -R $USER:$USER logs
+    && mkdir files \
+    && chown -R $USER:$USER logs \
+    && chown -R $USER:$USER files
 
 USER 1000
 WORKDIR /
@@ -35,6 +37,7 @@ COPY --from=BACK --chown=$USER:$USER /go/src/casibase/server_${BUILDX_ARCH} ./se
 COPY --from=BACK --chown=$USER:$USER /go/src/casibase/data ./data
 COPY --from=BACK --chown=$USER:$USER /go/src/casibase/conf/app.conf ./conf/app.conf
 COPY --from=FRONT --chown=$USER:$USER /web/build ./web/build
+ENV RUNNING_IN_DOCKER=true
 
 ENTRYPOINT ["/server"]
 
@@ -62,6 +65,7 @@ COPY --from=BACK /go/src/casibase/data ./data
 COPY --from=BACK /go/src/casibase/docker-entrypoint.sh /docker-entrypoint.sh
 COPY --from=BACK /go/src/casibase/conf/app.conf ./conf/app.conf
 COPY --from=FRONT /web/build ./web/build
+ENV RUNNING_IN_DOCKER=true
 
 ENTRYPOINT ["/bin/bash"]
 CMD ["/docker-entrypoint.sh"]

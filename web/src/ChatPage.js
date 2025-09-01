@@ -60,6 +60,7 @@ class ChatPage extends BaseListPage {
   }
 
   componentDidMount() {
+    super.componentDidMount();
     window.addEventListener("message", event => {
       if ((event.data.source !== undefined && event.data.source.includes("react-devtools")) || event.data.wappalyzer !== undefined) {
         return;
@@ -74,6 +75,12 @@ class ChatPage extends BaseListPage {
 
     if (this.props.onCreateChatPage) {
       this.props.onCreateChatPage(this);
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const newMessage = urlParams.get("newMessage");
+
+    if (newMessage && newMessage.trim() !== "") {
+      this.sendMessage(newMessage);
     }
   }
 
@@ -124,7 +131,7 @@ class ChatPage extends BaseListPage {
   };
 
   getGlobalStores() {
-    StoreBackend.getGlobalStores("", "", "", "", "", "").then((res) => {
+    StoreBackend.getGlobalStores().then((res) => {
       if (res.status === "ok") {
         const stores = res?.data;
         const defaultStore = stores?.find(store => store.isDefault);
@@ -277,14 +284,11 @@ class ChatPage extends BaseListPage {
           const field = "user";
           const value = this.props.account.name;
           const sortField = "", sortOrder = "";
-          const storeName = this.getStore();
-          ChatBackend.getChats(value, -1, -1, field, value, sortField, sortOrder)
+          const storeName = this.state.storeName;
+          ChatBackend.getChats(value, storeName, -1, -1, field, value, sortField, sortOrder)
             .then((res) => {
               if (res.status === "ok") {
-                let chats = res.data;
-                if (storeName) {
-                  chats = chats.filter(chat => chat.store === storeName);
-                }
+                const chats = res.data;
                 this.setState({
                   data: chats,
                 });
@@ -304,37 +308,13 @@ class ChatPage extends BaseListPage {
       });
   }
 
-  getMessageAnswerFromURL(messages) {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.get("newMessage")) {
-      return false;
-    }
-    const newMessage = params.get("newMessage");
-    const hasAsked = messages.some(message => message.text === newMessage);
-    if (newMessage !== null && !hasAsked && (!this.props.account.isAdmin || Setting.isAnonymousUser(this.props.account))) {
-      if (messages.length > 0 && messages[0].replyTo === "Welcome") {
-        MessageBackend.deleteWelcomeMessage(messages[0])
-          .then((res) => {
-            if (res.status !== "ok") {
-              Setting.showMessage("error", `${i18next.t("general:Failed to delete")}: ${res.msg}`);
-            }
-          })
-          .catch(error => {
-            Setting.showMessage("error", `${i18next.t("general:Failed to delete")}: ${error}`);
-          });
-      }
-      this.sendMessage(newMessage);
-      return true;
-    }
-    return false;
-  }
-
   getMessages(chat) {
+    this.setState({
+      messageError: false,
+    });
+
     MessageBackend.getChatMessages("admin", chat.name)
       .then((res) => {
-        if (this.getMessageAnswerFromURL(res.data)) {
-          return;
-        }
         res.data.map((message) => {
           message.html = renderText(message.text);
         });
@@ -515,6 +495,7 @@ class ChatPage extends BaseListPage {
           this.setState({
             chat: newChat,
             messages: null,
+            messageError: false,
           });
           this.getMessages(newChat);
 
@@ -671,6 +652,7 @@ class ChatPage extends BaseListPage {
         chat: chat,
         // messages: null,
         chatMenuVisible: false,
+        messageError: false,
       });
       this.getMessages(chat);
       this.goToLinkSoft(this.generateChatUrl(chat.name, chat.store));
@@ -691,7 +673,7 @@ class ChatPage extends BaseListPage {
       this.updateChatName(chats, i, chat, newName);
     };
 
-    const currentStoreName = this.getStore();
+    const currentStoreName = this.state.storeName;
 
     if (this.state.loading) {
       return (
@@ -789,28 +771,30 @@ class ChatPage extends BaseListPage {
     const value = this.props.account.name;
     const sortField = params.sortField, sortOrder = params.sortOrder;
     const chatName = this.getChat();
-    const storeName = this.getStore();
+    const storeName = this.state.storeName;
 
     if (setLoading) {
       this.setState({loading: true});
     }
-    ChatBackend.getChats(value, -1, -1, field, value, sortField, sortOrder)
+    ChatBackend.getChats(value, storeName, -1, -1, field, value, sortField, sortOrder)
       .then((res) => {
         if (res.status === "ok") {
-          let chats = res.data;
-          if (storeName) {
-            chats = chats.filter(chat => chat.store === storeName);
-          }
+          const chats = res.data;
           this.setState({
             loading: false,
             data: chats,
             messages: [],
+            messageError: false,
             searchText: params.searchText,
             searchedColumn: params.searchedColumn,
           });
 
           if (chatName !== undefined && chats.length > 0) {
-            const chat = chats.find(chat => chat.name === chatName);
+            let chat = chats.find(chat => chat.name === chatName);
+            if (!chat) {
+              chat = chats[0];
+              this.goToLinkSoft(this.generateChatUrl(chat.name, chat.store));
+            }
             this.getMessages(chat);
             this.setState({
               chat: chat,

@@ -189,7 +189,7 @@ class DashboardPage extends Component {
           data: mockData.hospitalSubmissions.values,
           itemStyle: {
             // 从深到浅的蓝色渐变
-            color: function(params) {
+            color: function (params) {
               const colorList = [
                 '#364fc7',  // 深蓝
                 '#3b5bdb',
@@ -199,7 +199,7 @@ class DashboardPage extends Component {
                 "#339af0",
                 "#4dabf7",
                 "#74c0fc"
-                
+
                 // 浅蓝
               ];
               // 根据数据索引循环使用颜色
@@ -221,13 +221,13 @@ class DashboardPage extends Component {
         <h1>可信共享数据总览</h1>
         <Row gutter={[16, 16]}>
           <Col span={24}>
-            <Card title="就诊记录统计总览" bordered={true} style={{ 
+            <Card title="就诊记录统计总览" bordered={true} style={{
               height: '100%',
               backgroundImage: 'url(' + require('./hospital_back_bg.jpg') + ')',
               backgroundPosition: 'right 0px bottom -40px',
               backgroundRepeat: 'no-repeat',
               backgroundSize: 'contain',
-              border:"2px solid #1890ff",
+              border: "2px solid #1890ff",
               padding: '24px'
             }}>
               <div style={{ maxWidth: '60%' }}>
@@ -236,15 +236,15 @@ class DashboardPage extends Component {
                   value={mockData.totalRecords}
                   valueStyle={{ fontSize: 36, color: '#1890ff' }}
                   formatter={(value) => `${(value / 10000).toFixed(1)}万`}
-                  
+
                 />
                 {/* <p style={{ marginTop: 16 }}>按患者就诊记录统计（非身份证号）</p> */}
               </div>
-              
+
             </Card>
-            
+
           </Col>
-         
+
           <Col span={24} lg={12}>
             <Card title="各家医院数据量占比" bordered={true}>
               {this.renderHospitalPieChart()}

@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/beego/beego"
 	"github.com/casdoor/casdoor-go-sdk/casdoorsdk"
+	"github.com/casibase/casibase/conf"
 	"github.com/casibase/casibase/model"
 )
 
@@ -46,8 +46,8 @@ type UserUsage struct {
 	Price        float64 `json:"price"`
 }
 
-func GetUsages(days int, user string) ([]*Usage, error) {
-	messages, err := GetGlobalMessagesByCreatedTime()
+func GetUsages(days int, user string, storeName string) ([]*Usage, error) {
+	messages, err := GetGlobalMessagesByStoreName(storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func GetUsage(date string) (*Usage, error) {
 }
 
 func GetUsageMetadata() (*UsageMetadata, error) {
-	casdoorOrganization := beego.AppConfig.String("casdoorOrganization")
+	casdoorOrganization := conf.GetConfigString("casdoorOrganization")
 	organization, err := casdoorsdk.GetOrganization(casdoorOrganization)
 	if err != nil {
 		return nil, err
@@ -199,7 +199,7 @@ func GetUsageMetadata() (*UsageMetadata, error) {
 		return nil, fmt.Errorf("Casdoor organization: [%s] doesn't exist", casdoorOrganization)
 	}
 
-	casdoorApplication := beego.AppConfig.String("casdoorApplication")
+	casdoorApplication := conf.GetConfigString("casdoorApplication")
 	application, err := casdoorsdk.GetApplication(casdoorApplication)
 	if err != nil {
 		return nil, err
@@ -215,11 +215,11 @@ func GetUsageMetadata() (*UsageMetadata, error) {
 	return res, nil
 }
 
-func GetUsers(user string) ([]string, error) {
+func GetUsers(storeName, user string) ([]string, error) {
 	users := []string{}
 	userMap := map[string]bool{}
 
-	messages, err := GetMessages("admin", user)
+	messages, err := GetMessages("admin", user, storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -234,8 +234,8 @@ func GetUsers(user string) ([]string, error) {
 	return users, nil
 }
 
-func GetUserTableInfos(user string) ([]*UserUsage, error) {
-	messages, err := GetMessages("admin", user)
+func GetUserTableInfos(storeName, user string) ([]*UserUsage, error) {
+	messages, err := GetMessages("admin", user, storeName)
 	if err != nil {
 		return nil, err
 	}

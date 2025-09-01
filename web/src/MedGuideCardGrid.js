@@ -318,7 +318,11 @@ const MedSceneGrid = () => {
         </section>
     );
 
+<<<<<<< HEAD
     const renderGroup = (group, rowClass="") => (
+=======
+    const renderGroup = (group, rowClass = "") => (
+>>>>>>> 068a935042ffdb9bcfc816cea4989a943652ba3d
         <div className={`${GROUP_WRAP_CLS} ${rowClass}`} style={{ borderLeft: `6px solid ${group.color}` }}>
             <div className={SCENE_TITLE_CLS} style={{ textAlign: "center", fontSize: "18px", fontWeight: "bold" }}>
                 {group.title}
