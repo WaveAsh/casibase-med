@@ -61,6 +61,7 @@ func initAPI() {
 	beego.Router("/api/delete-store", &controllers.ApiController{}, "POST:DeleteStore")
 	beego.Router("/api/refresh-store-vectors", &controllers.ApiController{}, "POST:RefreshStoreVectors")
 	beego.Router("/api/get-storage-providers", &controllers.ApiController{}, "GET:GetStorageProviders")
+	beego.Router("/api/get-store-names", &controllers.ApiController{}, "GET:GetStoreNames")
 
 	beego.Router("/api/get-global-providers", &controllers.ApiController{}, "GET:GetGlobalProviders")
 	beego.Router("/api/get-providers", &controllers.ApiController{}, "GET:GetProviders")
@@ -222,6 +223,20 @@ func initAPI() {
 	beego.Router("/api/add-record", &controllers.ApiController{}, "POST:AddRecord")
 	beego.Router("/api/add-records", &controllers.ApiController{}, "POST:AddRecords")
 	beego.Router("/api/delete-record", &controllers.ApiController{}, "POST:DeleteRecord")
+
+	// IPFS Archive API
+	beego.Router("/api/get-ipfs-archives", &controllers.ApiController{}, "GET:GetIpfsArchives")
+	beego.Router("/api/get-ipfs-archive-by-correlation-id", &controllers.ApiController{}, "GET:GetIpfsArchiveByCorrelationId")
+	beego.Router("/api/get-ipfs-archives-by-correlation-id-and-data-type", &controllers.ApiController{}, "GET:GetIpfsArchivesByCorrelationIdAndDataType")
+	beego.Router("/api/get-ipfs-archive-by-id", &controllers.ApiController{}, "GET:GetIpfsArchiveById")
+	beego.Router("/api/add-ipfs-archive", &controllers.ApiController{}, "POST:AddIpfsArchive")
+	beego.Router("/api/update-ipfs-archive", &controllers.ApiController{}, "POST:UpdateIpfsArchive")
+	beego.Router("/api/delete-ipfs-archive-by-id", &controllers.ApiController{}, "POST:DeleteIpfsArchiveById")
+	beego.Router("/api/get-ipfs-archive-all-queue-data", &controllers.ApiController{}, "Get:GetAllQueueData")
+	beego.Router("/api/add-ipfs-archive-unupload-queue-data", &controllers.ApiController{}, "Get:AddUnUploadIpfsDataToQueue")
+	beego.Router("/api/add-ipfs-archive-queue-data-by-record-id", &controllers.ApiController{}, "Post:AddRecordsWithDataTypesToQueue")
+	beego.Router("/api/remove-ipfs-archive-queue-data-by-record-id-and-data-type", &controllers.ApiController{}, "Post:RemoveRecordFromQueueByRecordIdAndDataType")
+	beego.Router("/api/archive-to-ipfs", &controllers.ApiController{}, "Post:ArchiveToIPFS")
 
 	beego.Router("/api/commit-record", &controllers.ApiController{}, "POST:CommitRecord")
 	beego.Router("/api/commit-record-second", &controllers.ApiController{}, "POST:CommitRecordSecond")

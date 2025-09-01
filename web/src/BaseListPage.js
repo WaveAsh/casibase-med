@@ -26,6 +26,7 @@ class BaseListPage extends React.Component {
     super(props);
     this.state = {
       classes: props,
+      storeName: this.props.match?.params.storeName || Setting.getRequestStore(this.props.account),
       data: [],
       pagination: {
         current: 1,
@@ -40,12 +41,42 @@ class BaseListPage extends React.Component {
     };
   }
 
+  handleStoreChange = () => {
+    this.setState({
+      storeName: this.props.match?.params.storeName || Setting.getRequestStore(this.props.account),
+    },
+    () => {
+      const {pagination} = this.state;
+      this.fetch({pagination});
+    });
+  };
+
+  componentDidMount() {
+    window.addEventListener("storeChanged", this.handleStoreChange);
+    if (!Setting.isLocalAdminUser(this.props.account)) {
+      Setting.setStore("All");
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.state.intervalId !== null) {
+      clearInterval(this.state.intervalId);
+    }
+    window.removeEventListener("storeChanged", this.handleStoreChange);
+  }
+
   UNSAFE_componentWillMount() {
     const {pagination} = this.state;
     this.fetch({pagination});
   }
 
-  getColumnSearchProps = dataIndex => ({
+  getColumnSearchProps = dataIndex => {
+    // 当dataIndex为null或空字符串时不展示搜索功能
+    if (dataIndex === null || dataIndex === '') {
+      return {};
+    }
+
+    return ({
     filterDropdown: ({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
       <div style={{padding: 8}}>
         <Input
@@ -109,7 +140,9 @@ class BaseListPage extends React.Component {
       ) : (
         text
       ),
-  });
+        
+    })
+  };
 
   getRowSelection = () => ({
     selectedRowKeys: this.state.selectedRowKeys,

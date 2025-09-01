@@ -156,7 +156,7 @@ export function isAdminUser(account) {
   if (account === undefined || account === null) {
     return false;
   }
-  return account.owner === "built-in" || account.isGlobalAdmin === true;
+  return account.owner === "built-in" || account.isAdmin === true;
 }
 
 export function isLocalAdminUser(account) {
@@ -896,6 +896,10 @@ export function getOtherProviderInfo() {
         logo: `${StaticBaseUrl}/img/social_cucloud.png`,
         url: "https://www.cucloud.cn/product/oss.html",
       },
+      "OpenAI File System": {
+        logo: `${StaticBaseUrl}/img/social_openai.svg`,
+        url: "https://platform.openai.com",
+      },
     },
     Blockchain: {
       "Hyperledger Fabric": {
@@ -1094,6 +1098,7 @@ export function getProviderTypeOptions(category) {
     return (
       [
         {id: "Local File System", name: "Local File System"},
+        {id: "OpenAI File System", name: "OpenAI File System"},
       ]
     );
   } else if (category === "Model") {
@@ -1792,6 +1797,30 @@ export function getRequestOrganization(account) {
     return getOrganization() === "All" ? account.owner : getOrganization();
   }
   return account.owner;
+}
+
+export function setStore(store) {
+  localStorage.setItem("store", store);
+  window.dispatchEvent(new Event("storeChanged"));
+}
+
+export function getStore() {
+  const store = localStorage.getItem("store");
+  return store !== null ? store : "All";
+}
+
+export function getRequestStore(account) {
+  if (isLocalAdminUser(account)) {
+    return getStore() === "All" ? "" : getStore();
+  }
+  return "";
+}
+
+export function isDefaultStoreSelected(account) {
+  if (isLocalAdminUser(account)) {
+    return getStore() === "All";
+  }
+  return true;
 }
 
 export function getBoolValue(key, defaultValue) {

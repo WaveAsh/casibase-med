@@ -89,7 +89,7 @@ class StoreListPage extends BaseListPage {
       <img width={20} height={20} src={Setting.getProviderLogoURL(provider)} alt={provider.name} />
     );
 
-    const isLocalStorage = provider.type === "Local File System";
+    const isLocalStorage = ["Local File System", "OpenAI File System"].includes(provider.type);
     const providerType = provider.category;
 
     if (providerType === "Image" || (providerType === "Storage" && !isLocalStorage)) {
@@ -149,6 +149,7 @@ class StoreListPage extends BaseListPage {
       .then((res) => {
         if (res.status === "ok") {
           Setting.showMessage("success", i18next.t("general:Successfully added"));
+          window.dispatchEvent(new Event("storesChanged"));
           this.setState({
             data: Setting.prependRow(this.state.data, newStore),
             pagination: {
@@ -174,6 +175,7 @@ class StoreListPage extends BaseListPage {
       .then((res) => {
         if (res.status === "ok") {
           Setting.showMessage("success", i18next.t("general:Successfully deleted"));
+          window.dispatchEvent(new Event("storesChanged"));
           this.setState({
             data: this.state.data.filter((item) => item.name !== record.name),
             pagination: {
@@ -460,7 +462,7 @@ class StoreListPage extends BaseListPage {
       value = params.type;
     }
     this.setState({loading: true});
-    StoreBackend.getGlobalStores(params.pagination.current, params.pagination.pageSize, field, value, sortField, sortOrder)
+    StoreBackend.getGlobalStores(Setting.getRequestStore(this.props.account), params.pagination.current, params.pagination.pageSize, field, value, sortField, sortOrder)
       .then((res) => {
         this.setState({
           loading: false,
